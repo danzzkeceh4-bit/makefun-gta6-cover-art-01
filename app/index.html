@@ -8,29 +8,29 @@
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<header class="topbar">
-  <div class="brand">
-    <span class="brand-mark">VC</span>
+<header class="masthead">
+  <div class="masthead-brand">
+    <span class="logo-tile">VC</span>
     <div>
       <h1>VICE COVER STUDIO</h1>
       <p>Turn your photo into GTA-style poster art</p>
     </div>
   </div>
-  <div class="top-actions">
-    <span id="sizeLabel" class="size-label">1920 × 1080</span>
+  <div class="masthead-actions">
+    <span id="sizeLabel" class="size-pill">1920 × 1080</span>
     <button id="exportBtn" class="btn primary" type="button">Export PNG</button>
   </div>
 </header>
 
-<main id="editorView" class="editor">
-  <section class="preview-col">
-    <div id="dropZone" class="drop-zone">
+<main id="editorView" class="studio">
+  <section class="stage">
+    <div id="dropZone" class="canvas-frame">
       <canvas id="previewCanvas" width="1920" height="1080" aria-label="Live cover preview. Click a panel to select it, drag to move the photo, scroll to zoom."></canvas>
       <div id="dropHint" class="drop-hint">Drop photos here or use the picker</div>
     </div>
-    <div class="preview-bar">
+    <div class="stage-bar">
       <span id="panelHint" class="panel-hint">Panel 1 of 3 — drag to move, scroll to zoom</span>
-      <label class="zoom-row">Zoom
+      <label class="zoom-control">Zoom
         <input id="zoomSlider" type="range" min="100" max="300" value="100">
       </label>
       <button id="fillBtn" class="btn ghost" type="button">Fill panel</button>
@@ -38,10 +38,10 @@
     </div>
   </section>
 
-  <aside class="controls">
-    <section class="control-block">
+  <aside class="panel">
+    <section class="panel-block">
       <h2>Photos</h2>
-      <div class="photo-row">
+      <div class="photo-tools">
         <button id="pickBtn" class="btn" type="button">Add photos…</button>
         <input id="fileInput" type="file" accept="image/*" multiple hidden>
         <span id="photoCount" class="muted">2 photos loaded</span>
@@ -50,17 +50,17 @@
       <p class="muted small">Click a photo to put it in the selected panel. Photos never leave your machine.</p>
     </section>
 
-    <section class="control-block">
+    <section class="panel-block">
       <h2>Layout</h2>
       <div id="layoutGrid" class="choice-grid"></div>
     </section>
 
-    <section class="control-block">
+    <section class="panel-block">
       <h2>Colour grade</h2>
       <div id="gradeGrid" class="choice-grid"></div>
     </section>
 
-    <section class="control-block">
+    <section class="panel-block">
       <h2>Caption</h2>
       <label class="field">Title
         <input id="titleInput" type="text" value="VICE CITY" maxlength="24" autocomplete="off">
@@ -73,7 +73,7 @@
       </label>
     </section>
 
-    <section class="control-block">
+    <section class="panel-block">
       <h2>Export size</h2>
       <div id="sizeGrid" class="choice-grid"></div>
       <button id="exportBtn2" class="btn primary wide" type="button">Export PNG</button>

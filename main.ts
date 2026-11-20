@@ -1,30 +1,31 @@
-// Vice Cover Studio — make.fun entry program (Node 22, standard library only).
+// Vice Cover Studio — the program that hands this entry in.
 //
-// The app is plain static files under app/: index.html plus its own scripts,
-// styles, font and sample photos, served offline with no network request.
-// This program hands the entry in: it copies app/ and screenshots/ from
-// beside this file into the output directory and writes dossier.json there,
-// the summary the judge reads, built by the vendored make.fun library.
+// The entry itself is a folder of static files under app/: an index page,
+// its scripts and styles, a font and two sample photos, nothing that needs
+// a build step or a network connection. This program's only job is to hand
+// those files (plus the screenshots) to the grader: it wipes the output
+// folder, copies app/ and screenshots/ into it, and writes dossier.json,
+// the summary the judge reads, using the make.fun library vendored with
+// the kit. Node 22, standard library only.
 //
-// Run it outside the grader with:
-//   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
-// Inside the grader MAKEFUN_OUTPUT_DIR is unset and /output is used.
+// Try it locally with:
+//   MAKEFUN_OUTPUT_DIR=out node main.ts
+// (The grader runs it with MAKEFUN_OUTPUT_DIR unset, so it writes /output.)
 
 import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-app.ts';
 
-// The repository root is the directory holding this file.
-const repoRoot = fileURLToPath(new URL('.', import.meta.url));
-// The grader gives us a writable /output; local runs override it with an env var.
-const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+// This file lives at the repository root, so its own folder is the root.
+const repoDir = fileURLToPath(new URL('.', import.meta.url));
+const outDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-// The scorer's own caps, as the kit documents them: the text cap shapes the
-// dossier bytes, the rest refuse an entry the scorer would refuse outright
-// (too many or too large screenshots, too many or too large app files, or an
-// app path over the byte limit). app/ shares /output's own 1000-entry cap
-// with screenshots/ and dossier.json, so the caps below leave it room.
+// Caps the scorer applies, copied from the kit docs so a bad entry fails
+// loudly here instead of silently at grading time. The text cap shapes the
+// dossier; the other caps mirror the scorer's hard limits on screenshots,
+// app files and path lengths. /output itself holds at most 1000 entries,
+// shared by app/, screenshots/ and dossier.json.
 const dossierCaps = {
   text_max_bytes: 163840,
   screenshots: { max: 4, max_bytes: 262144 },
@@ -33,29 +34,30 @@ const dossierCaps = {
   app_path_max_bytes: 1000,
 };
 
-function copyTree(source, target) {
-  if (!existsSync(source)) return;
-  mkdirSync(target, { recursive: true });
-  cpSync(source, target, { recursive: true });
+function copyIfThere(src, dst) {
+  if (!existsSync(src)) return;
+  mkdirSync(dst, { recursive: true });
+  cpSync(src, dst, { recursive: true });
+}
+
+function shotCount(dir) {
+  return existsSync(dir) ? readdirSync(dir).length : 0;
 }
 
 function main() {
-  // Start from a clean output directory so a stale file can never leak in.
-  rmSync(outputDir, { recursive: true, force: true });
-  mkdirSync(outputDir, { recursive: true });
+  // Wipe first: a stale file from an earlier run must never sneak in.
+  rmSync(outDir, { recursive: true, force: true });
+  mkdirSync(outDir, { recursive: true });
 
-  copyTree(join(repoRoot, 'app'), join(outputDir, 'app'));
-  copyTree(join(repoRoot, 'screenshots'), join(outputDir, 'screenshots'));
+  copyIfThere(join(repoDir, 'app'), join(outDir, 'app'));
+  copyIfThere(join(repoDir, 'screenshots'), join(outDir, 'screenshots'));
 
-  // How many screenshots went in (the gate caps them at 4, at most 256 KiB each).
-  const shotCount = existsSync(join(outputDir, 'screenshots'))
-    ? readdirSync(join(outputDir, 'screenshots')).length
-    : 0;
-  console.log(`copied app/ and ${shotCount} screenshot(s) to ${outputDir}`);
+  const n = shotCount(join(outDir, 'screenshots'));
+  console.log(`copied app/ and ${n} screenshot(s) into ${outDir}`);
 
-  const dossier = buildDossier(outputDir, dossierCaps);
-  writeFileSync(join(outputDir, 'dossier.json'), dossier);
-  console.log(`wrote ${join(outputDir, 'dossier.json')} (${dossier.length} bytes)`);
+  const dossier = buildDossier(outDir, dossierCaps);
+  writeFileSync(join(outDir, 'dossier.json'), dossier);
+  console.log(`wrote ${join(outDir, 'dossier.json')} (${dossier.length} bytes)`);
 }
 
 main();
