@@ -1,40 +1,61 @@
-// A working gta6-cover-art-01 entry (Node 22, standard library only): the app is this directory's app/ folder, plain
-// static files a desktop browser loads offline (app/index.html and its ES modules, no library and no network
-// request), and the program hands it in. It copies app/ and screenshots/ from beside this file to /output and writes
-// /output/dossier.json, the summary the judge reads, with the vendored make.fun library. Only the plumbing, not the
-// cover art the bounty asks for: Cover Snap, a plain one-photo square cover with a sunset tint and a bold caption,
-// exported as a 1080 x 1080 PNG. Its two sample photos (app/samples/) were made for make.fun with an image model and
-// are free to use. Build your own GTA-style cover maker in its place, put your 3 or 4 PNG or JPEG screenshots in
-// screenshots/ (the first by name is the cover) and run it.
+// Vice Cover Studio — make.fun entry program (Node 22, standard library only).
 //
-// Serve it locally with `node serve.ts`, then open http://localhost:8080.
-// Outside the grader's container, MAKEFUN_OUTPUT_DIR stands in for /output:
+// The app is plain static files under app/: index.html plus its own scripts,
+// styles, font and sample photos, served offline with no network request.
+// This program hands the entry in: it copies app/ and screenshots/ from
+// beside this file into the output directory and writes dossier.json there,
+// the summary the judge reads, built by the vendored make.fun library.
+//
+// Run it outside the grader with:
 //   mkdir -p out && MAKEFUN_OUTPUT_DIR=out node main.ts
+// Inside the grader MAKEFUN_OUTPUT_DIR is unset and /output is used.
 
-import { cpSync, existsSync, mkdirSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildDossier } from './vendor/makefun-app.ts';
 
-const here = fileURLToPath(new URL('.', import.meta.url));
-const out = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
+// The repository root is the directory holding this file.
+const repoRoot = fileURLToPath(new URL('.', import.meta.url));
+// The grader gives us a writable /output; local runs override it with an env var.
+const outputDir = process.env.MAKEFUN_OUTPUT_DIR ?? '/output';
 
-mkdirSync(out, { recursive: true });
-cpSync(join(here, 'app'), join(out, 'app'), { recursive: true });
-mkdirSync(join(out, 'screenshots'), { recursive: true });
-if (existsSync(join(here, 'screenshots'))) cpSync(join(here, 'screenshots'), join(out, 'screenshots'), { recursive: true });
+// The scorer's own caps, as the kit documents them: the text cap shapes the
+// dossier bytes, the rest refuse an entry the scorer would refuse outright
+// (too many or too large screenshots, too many or too large app files, or an
+// app path over the byte limit). app/ shares /output's own 1000-entry cap
+// with screenshots/ and dossier.json, so the caps below leave it room.
+const dossierCaps = {
+  text_max_bytes: 163840,
+  screenshots: { max: 4, max_bytes: 262144 },
+  app_max_files: 993,
+  app_max_bytes: 50331648,
+  app_path_max_bytes: 1000,
+};
 
-// The scorer's own caps (reference/gate.json): only text_max_bytes shapes the bytes; the others refuse an entry the
-// scorer would refuse (more than 4 screenshots or one over 256 KiB; more than 993 files in app/ or 48 MiB of app
-// files, in all, or a path under app/ over 1000 bytes: app/ counts beside /output's own 1000-entry cap, its
-// screenshots/ and dossier.json).
-writeFileSync(
-  join(out, 'dossier.json'),
-  buildDossier(out, {
-    text_max_bytes: 163840,
-    screenshots: { max: 4, max_bytes: 262144 },
-    app_max_files: 993,
-    app_max_bytes: 50331648,
-    app_path_max_bytes: 1000,
-  }),
-);
+function copyTree(source, target) {
+  if (!existsSync(source)) return;
+  mkdirSync(target, { recursive: true });
+  cpSync(source, target, { recursive: true });
+}
+
+function main() {
+  // Start from a clean output directory so a stale file can never leak in.
+  rmSync(outputDir, { recursive: true, force: true });
+  mkdirSync(outputDir, { recursive: true });
+
+  copyTree(join(repoRoot, 'app'), join(outputDir, 'app'));
+  copyTree(join(repoRoot, 'screenshots'), join(outputDir, 'screenshots'));
+
+  // How many screenshots went in (the gate caps them at 4, at most 256 KiB each).
+  const shotCount = existsSync(join(outputDir, 'screenshots'))
+    ? readdirSync(join(outputDir, 'screenshots')).length
+    : 0;
+  console.log(`copied app/ and ${shotCount} screenshot(s) to ${outputDir}`);
+
+  const dossier = buildDossier(outputDir, dossierCaps);
+  writeFileSync(join(outputDir, 'dossier.json'), dossier);
+  console.log(`wrote ${join(outputDir, 'dossier.json')} (${dossier.length} bytes)`);
+}
+
+main();

@@ -1,23 +1,94 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Cover Snap</title>
-<link rel="stylesheet" href="./style.css">
+<meta name="description" content="Vice Cover Studio — turn your photo and a caption into GTA-style poster cover art, offline in the browser, and export it as a PNG.">
+<title>Vice Cover Studio — GTA-style cover art maker</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
-<main class="app">
-  <section class="controls">
-    <h1>Cover Snap</h1>
-    <p>A photo and a caption, made into a square cover.</p>
-    <label>Photo <input id="photo" type="file" accept="image/*"></label>
-    <label>Caption <input id="caption" type="text" maxlength="40" value="Sunset Heist"></label>
-    <button id="export" type="button">Export PNG 1080 x 1080</button>
-    <p id="status" role="status"></p>
+<header class="topbar">
+  <div class="brand">
+    <span class="brand-mark">VC</span>
+    <div>
+      <h1>VICE COVER STUDIO</h1>
+      <p>Turn your photo into GTA-style poster art</p>
+    </div>
+  </div>
+  <div class="top-actions">
+    <span id="sizeLabel" class="size-label">1920 × 1080</span>
+    <button id="exportBtn" class="btn primary" type="button">Export PNG</button>
+  </div>
+</header>
+
+<main id="editorView" class="editor">
+  <section class="preview-col">
+    <div id="dropZone" class="drop-zone">
+      <canvas id="previewCanvas" width="1920" height="1080" aria-label="Live cover preview. Click a panel to select it, drag to move the photo, scroll to zoom."></canvas>
+      <div id="dropHint" class="drop-hint">Drop photos here or use the picker</div>
+    </div>
+    <div class="preview-bar">
+      <span id="panelHint" class="panel-hint">Panel 1 of 3 — drag to move, scroll to zoom</span>
+      <label class="zoom-row">Zoom
+        <input id="zoomSlider" type="range" min="100" max="300" value="100">
+      </label>
+      <button id="fillBtn" class="btn ghost" type="button">Fill panel</button>
+      <button id="swapBtn" class="btn ghost" type="button">Next photo</button>
+    </div>
   </section>
-  <canvas id="cover" width="1080" height="1080" aria-label="The cover"></canvas>
+
+  <aside class="controls">
+    <section class="control-block">
+      <h2>Photos</h2>
+      <div class="photo-row">
+        <button id="pickBtn" class="btn" type="button">Add photos…</button>
+        <input id="fileInput" type="file" accept="image/*" multiple hidden>
+        <span id="photoCount" class="muted">2 photos loaded</span>
+      </div>
+      <div id="photoStrip" class="photo-strip"></div>
+      <p class="muted small">Click a photo to put it in the selected panel. Photos never leave your machine.</p>
+    </section>
+
+    <section class="control-block">
+      <h2>Layout</h2>
+      <div id="layoutGrid" class="choice-grid"></div>
+    </section>
+
+    <section class="control-block">
+      <h2>Colour grade</h2>
+      <div id="gradeGrid" class="choice-grid"></div>
+    </section>
+
+    <section class="control-block">
+      <h2>Caption</h2>
+      <label class="field">Title
+        <input id="titleInput" type="text" value="VICE CITY" maxlength="24" autocomplete="off">
+      </label>
+      <label class="field">Subtitle
+        <input id="subtitleInput" type="text" value="NEON NIGHTS" maxlength="32" autocomplete="off">
+      </label>
+      <label class="field">Footer line
+        <input id="footerInput" type="text" value="A STORY FROM VICE CITY" maxlength="48" autocomplete="off">
+      </label>
+    </section>
+
+    <section class="control-block">
+      <h2>Export size</h2>
+      <div id="sizeGrid" class="choice-grid"></div>
+      <button id="exportBtn2" class="btn primary wide" type="button">Export PNG</button>
+      <p class="muted small">Exports a PNG at the size above. No upload, no watermark.</p>
+    </section>
+  </aside>
 </main>
-<script type="module" src="./src/main.js"></script>
+
+<section id="coverView" class="cover-view" hidden>
+  <canvas id="coverCanvas"></canvas>
+</section>
+
+<div id="selftest" class="selftest" hidden></div>
+
+<script src="src/render.js"></script>
+<script src="src/app.js"></script>
 </body>
 </html>
